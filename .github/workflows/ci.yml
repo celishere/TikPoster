@@ -1,0 +1,45 @@
+on:
+  push:
+    branches:
+      - master
+name: ci
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        node: [20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Installing dependencies
+        run: npm install --production --engine-strict --ignore-scripts --no-package-lock
+      - run: rm -rf node_modules
+      - run: npm ci
+      - name: Building...
+        run: npm run build
+      - run: zip -r release_${{ steps.get_version.outputs.version }}_${{ github.sha }}.zip dist
+      - name: Uploading artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: release_${{ steps.get_version.outputs.version }}_${{ github.sha }}
+          path: release_${{ steps.get_version.outputs.version }}_${{ github.sha }}.zip
+      - name: Creating an GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: ${{ steps.get_version.outputs.version }}
+          body: 🤖 ${{ steps.get_version.outputs.version }} (${{ github.sha }}) by ${{ github.actor }}
+      - name: Attaching artifact to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_${{ steps.get_version.outputs.version }}_${{ github.sha }}.zip
+          asset_name: release_${{ steps.get_version.outputs.version }}_${{ github.sha }}.zip
+          asset_content_type: application/zip

@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    commit-message:
+      prefix: "fix"
+    rebase-strategy: "auto"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-name: "release-please"
