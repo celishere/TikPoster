@@ -17,7 +17,6 @@ jobs:
       - name: Installing dependencies
         run: npm install --production --engine-strict --ignore-scripts --no-package-lock
       - run: rm -rf node_modules
-      - run: npm ci
       - name: Building...
         run: npm run build
       - run: zip -r release_${{ steps.get_version.outputs.version }}_${{ github.sha }}.zip dist
