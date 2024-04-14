@@ -7,10 +7,12 @@ RUN npm install --global yarn
 
 WORKDIR /usr/src/app
 
-COPY package.json yarn.lock ./
+COPY package.json ./
 
-RUN yarn install && yarn build
+RUN yarn install
 
 COPY . .
+
+RUN yarn build
 
 CMD ["yarn", "start"]
