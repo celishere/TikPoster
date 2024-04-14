@@ -158,7 +158,8 @@ class Worker {
             });
 
             const stream = await fs.readFile(videoPath);
-          //  await this.bot.telegram.sendVideo(this.config.channel_id, { source: stream }, { caption });
+
+            await this.bot.telegram.sendVideo(this.config.channel_id, { source: stream }, { caption });
             await fs.unlink(videoPath);
         } catch (error) {
             this.logger.error({
@@ -198,7 +199,7 @@ class Worker {
             });
 
             if (images.length === 10 || key === Array.from(imagesFromVideo).length - 1) {
-               // await this.bot.telegram.sendMediaGroup(this.config.channel_id, images);
+                await this.bot.telegram.sendMediaGroup(this.config.channel_id, images);
 
                 this.logger.info({
                     event: Events.IMAGE_SEND,
