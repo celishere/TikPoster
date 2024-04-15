@@ -3,5 +3,7 @@ cache
 dist
 .env
 .idea
+http.txt
+lastProxyCheck.dat
 yarn.lock
 package-lock.json

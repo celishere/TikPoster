@@ -12,7 +12,7 @@ import { Telegraf } from "telegraf";
 import { InputMediaPhoto } from "telegraf/src/core/types/typegram";
 
 import { IConfig } from "./interfaces/config.interface";
-import { IFavouriteVideo} from "./interfaces/favourite.model.interface";
+import { IFavouriteVideo } from "./interfaces/favourite.model.interface";
 
 import { downloadVideo, getLikedVideos } from "./http";
 
@@ -46,7 +46,8 @@ class Worker {
         private readonly logger: Logger,
         private readonly config: IConfig,
         private readonly bot: Telegraf,
-        private readonly redis: RedisClientType
+        private readonly redis: RedisClientType,
+        private proxyList?: string[]
     ) {
         this.appPath = fs_base.realpathSync(`${ __dirname }/../`);
         this.cachePath = `${ this.appPath }/cache`;
@@ -56,11 +57,15 @@ class Worker {
         }
     }
 
+    updateProxyList(list: string[]) {
+        this.proxyList = list;
+    }
+
     async createTask(): Promise<void> {
         let videos;
 
         try {
-            videos = await getLikedVideos(this.logger, this.config.tiktok_username, this.config.fetch_count);
+            videos = await getLikedVideos(this.logger, this.config.tiktok_username, this.config.fetch_count, this.proxyList);
         } catch (err) {
             this.logger.error({
                 event: Events.FETCH_ERR
@@ -75,7 +80,7 @@ class Worker {
             return;
         }
 
-        for (const video of videos) {
+        for (const [index, video] of videos.entries()) {
             try {
                 const cache = await this.redis.get(`tiktok:${video.id}`);
                 if (cache) {
@@ -119,7 +124,9 @@ class Worker {
 
                 this.logger.info({
                     event: Events.COMPLETED,
-                    id: video.id
+                    id: video.id,
+                    pos: index + 1,
+                    of: videos.length
                 });
             } catch (e) {
                 this.logger.error(e);
@@ -138,7 +145,7 @@ class Worker {
                 videoPath
             });
 
-            await downloadVideo(video.play, videoPath, this.logger);
+            await downloadVideo(this.logger, video.play, videoPath);
 
             if (await checkFileSize(videoPath, maxSize)) {
                 const oldVideoPath = videoPath;

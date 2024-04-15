@@ -2,7 +2,7 @@ FROM alpine:latest
 
 LABEL authors="celis"
 
-RUN apk --no-cache add nodejs npm
+RUN apk --no-cache add nodejs npm ffmpeg
 RUN npm install --global yarn
 
 WORKDIR /usr/src/app

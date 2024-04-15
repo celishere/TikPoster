@@ -41,13 +41,19 @@ export const parseConfig = (logger: Logger): IConfig | null => {
         return null;
     }
 
+    let need_proxies = process.env.NEED_PROXIES;
+    if (!need_proxies) {
+        need_proxies = 'no';
+    }
+
     return {
         redis_url,
         bot_token,
         channel_id: parseInt(channel_id, 10),
         tiktok_username,
         fetch_count: parseInt(fetch_count, 10),
-        fetch_delay: parseInt(fetch_delay, 10)
+        fetch_delay: parseInt(fetch_delay, 10),
+        need_proxies: need_proxies == 'yes'
     }
 }
 

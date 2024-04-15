@@ -5,4 +5,5 @@ export interface IConfig {
     tiktok_username: string;
     fetch_count: number;
     fetch_delay: number;
+    need_proxies: boolean;
 }

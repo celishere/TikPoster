@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosInstance, AxiosProxyConfig } from "axios";
 import { Logger } from "pino";
 
 import * as fs from "fs/promises";
@@ -7,20 +7,32 @@ import { IFavouriteResponse, IFavouriteVideo } from "./interfaces/favourite.mode
 
 const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36";
 
-const client = axios.create({
-    baseURL: "https://www.tikwm.com/api/",
-    headers: {
-        "User-Agent": userAgent
+function client(proxyList?: string[]): AxiosInstance {
+    let randomProxy;
+    if (proxyList && proxyList.length > 0) {
+        randomProxy = proxyList[Math.floor(Math.random() * proxyList.length)];
     }
-});
 
-export async function getLikedVideos(logger: Logger, username: string, count: number): Promise<IFavouriteVideo[] | null> {
+    return axios.create({
+        baseURL: "https://www.tikwm.com/api/",
+        headers: {
+            "User-Agent": userAgent
+        },
+        timeout: 20000,
+        proxy: randomProxy ? {
+            host: randomProxy.split(":")[0],
+            port: randomProxy.split(":")[1]
+        } as unknown as AxiosProxyConfig : false
+    })
+}
+
+export async function getLikedVideos(logger: Logger, username: string, count: number, proxyList?: string[]): Promise<IFavouriteVideo[] | null> {
     logger.info({
         from: 'getLikedVideos',
         event: 'newTask',
     });
 
-    const response = await client.get(`user/favorite?unique_id=${username}&count=${count}`);
+    const response = await client(proxyList).get(`user/favorite?unique_id=${ username }&count=${ count }`);
     const { data } = response.data as IFavouriteResponse;
 
     if (!data) {
@@ -36,7 +48,7 @@ export async function getLikedVideos(logger: Logger, username: string, count: nu
         logger.error({
             from: 'getLikedVideos',
             event: 'noDataErr',
-            message: 'Could not get data from API'
+            message: 'No videos'
         });
         return null;
     }
@@ -66,13 +78,13 @@ export async function getLikedVideos(logger: Logger, username: string, count: nu
     return videos;
 }
 
-export async function downloadVideo(link: string, path: string, logger: Logger): Promise<void> {
+export async function downloadVideo(logger: Logger, link: string, path: string): Promise<void> {
     logger.info({
         from: 'downloadVideo',
         event: 'newTask',
     });
 
-    const response = await client.get(link, { baseURL: '', responseType: 'arraybuffer' });
+    const response = await client().get(link, { baseURL: '', responseType: 'arraybuffer' });
 
     if (!response.data || response.data.length === 0) {
         logger.error({
